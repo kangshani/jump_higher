@@ -1,0 +1,24 @@
+Create a simple browser game using **Kaboom.js** where:
+- The player is a character that can move left and right with the arrow keys and jump with the spacebar.
+- There’s a ground and a few floating platforms to jump on.
+- The camera follows the player as they move.
+- If the player falls off the screen, the game resets.
+- Use rectangles and colors for now (no sprites yet).
+- Keep the code clean and beginner-friendly, with comments explaining each section.
+
+Project structure:
+- index.html — loads Kaboom.js from CDN and your main.js script.
+- main.js — contains all the game logic.
+
+In index.html:
+- Create a minimal HTML page that loads Kaboom.js (`https://unpkg.com/kaboom/dist/kaboom.js`) and runs main.js.
+
+In main.js:
+- Initialize Kaboom.
+- Define gravity.
+- Add ground and platforms.
+- Add a controllable player.
+- Handle jumping and collisions.
+- Center the camera on the player.
+
+Make it fully playable in a browser by opening index.html.
