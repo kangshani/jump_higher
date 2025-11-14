@@ -35,33 +35,55 @@ scene("main", () => {
         "ground"
     ]);
 
-    // Add floating platforms (static physics bodies)
-    const platforms = [
-        [200, 470, 260, 24],    // Increased width from 180 to 260
-        [520, 380, 240, 24],    // Increased width from 160 to 240
-        [300, 270, 200, 24],    // Increased width from 120 to 200
-        [700, 215, 220, 24],    // Increased width from 140 to 220
-        [180, 130, 180, 20],    // Increased width from 100 to 180
-        [600, 80, 180, 20],     // Increased width from 100 to 180
-    ];
-
+    // Infinite mode: Platform generation system
+    let highestPlatformY = 80; // Track the highest platform Y position
+    const PLATFORM_GENERATION_DISTANCE = 200; // Generate new platforms when player is within this distance
+    const PLATFORM_REMOVAL_DISTANCE = 400; // Remove platforms this far below player
+    const PLATFORM_SPACING = 120; // Vertical spacing between platforms
+    const PLATFORM_MIN_WIDTH = 120;
+    const PLATFORM_MAX_WIDTH = 260;
+    
     // Store monster references for chasing behavior
     const monsters = [];
+    let chestSpawned = false; // Track if chest has been spawned
+    let lastChestY = -1000; // Track Y position of last spawned chest
     
-    platforms.forEach(([x, y, w, h], i) => {
-        add([
-            rect(w, h),
+    // Function to create a platform at a given Y position
+    function createPlatform(y) {
+        const w = rand(PLATFORM_MIN_WIDTH, PLATFORM_MAX_WIDTH);
+        const x = rand(100, width() - 100 - w); // Random X position within screen bounds
+        
+        const platform = add([
+            rect(w, 24),
             pos(x, y),
             area(),
             body({ isStatic: true }),
             color(...PLATFORM_COLOR),
             "platform"
         ]);
-        // Place a treasure chest (coin) on the highest platform
-        if (i === platforms.length - 1) {
+        
+        // 30% chance to spawn a monster on this platform (except on the very first platform near ground)
+        if (rand() < 0.2 && y < height() - 100) { // Allow monsters on all platforms except very close to ground
+            const initialY = y - 20;
+            const monster = add([
+                sprite("monster"),
+                pos(x + w / 2, initialY),
+                area(),
+                anchor("bot"),
+                scale(0.5),
+                z(15),
+                "monster"
+            ]);
+            monsters.push({ monster, initialY });
+        }
+        
+        // Spawn chest periodically (every ~400 pixels of height)
+        if (!chestSpawned && y < lastChestY - 400 && rand() < 0.4) {
+            chestSpawned = true;
+            lastChestY = y;
             add([
                 sprite("chest"),
-                pos(x + w / 2, y - 10), // center of the platform, slightly above
+                pos(x + w / 2, y - 10),
                 area(),
                 anchor("bot"),
                 scale(1.2),
@@ -69,22 +91,15 @@ scene("main", () => {
                 "chest"
             ]);
         }
-        // Add monsters on some platforms (not on the first, last, or ground-level platforms)
-        if (i > 0 && i < platforms.length - 1 && i % 2 === 0) {
-            const initialY = y - 20; // Store initial Y position (on platform)
-            const monster = add([
-                sprite("monster"),
-                pos(x + w / 2, initialY), // center of the platform, slightly above
-                area(),
-                anchor("bot"),
-                scale(0.5), // Reduced from 0.8 to 0.5 to make monsters smaller
-                z(15),
-                "monster"
-            ]);
-            // Store monster with its initial Y position
-            monsters.push({ monster, initialY }); // Store reference for chasing with Y position
-        }
-    });
+        
+        return platform;
+    }
+    
+    // Create initial platforms
+    for (let y = 470; y >= 80; y -= PLATFORM_SPACING) {
+        createPlatform(y);
+        highestPlatformY = Math.min(highestPlatformY, y);
+    }
 
     // TEST: Add the player as a Kaboom built-in sprite (bean)
     const player = add([
@@ -93,7 +108,7 @@ scene("main", () => {
         area(),
         body(),
         anchor("bot"),
-        scale(1),
+        scale(0.7),
         z(10),
         "player"
     ]);
@@ -102,6 +117,26 @@ scene("main", () => {
     let win = false;
     let lose = false;
     let jumpCount = 0; // Track number of jumps used (max 2 for double jump)
+    let lives = 3; // Player starts with 3 lives
+    let highestHeight = height() - 48; // Track highest platform Y reached (starts at ground level)
+    
+    // Create lives display in top left corner
+    const livesDisplay = add([
+        text(`Lives: ${lives}`, { size: 32 }),
+        color(255, 255, 255),
+        pos(20, 20),
+        z(1000),
+        "livesDisplay"
+    ]);
+    
+    // Create height display below lives
+    const heightDisplay = add([
+        text(`Height: ${Math.floor((height() - 48 - highestHeight) / 10)}m`, { size: 28 }),
+        color(255, 255, 200),
+        pos(20, 60),
+        z(1000),
+        "heightDisplay"
+    ]);
     const leftHandler = onKeyDown("left", () => { if (!win && !lose) player.move(-PLAYER_SPEED, 0); });
     const rightHandler = onKeyDown("right", () => { if (!win && !lose) player.move(PLAYER_SPEED, 0); });
     const jumpHandler = onKeyPress("space", () => {
@@ -114,63 +149,119 @@ scene("main", () => {
         }
     });
 
-    // Detect collision with chest (coin) - WIN condition
-    player.onCollide("chest", () => {
+    // Detect collision with chest (coin) - BONUS (infinite mode)
+    player.onCollide("chest", (chest) => {
         if (win || lose) return; // Prevent multiple triggers
-        win = true;
-        // Remove the coin (chest)
-        get("chest").forEach((chest) => destroy(chest));
-        // Show win message at the center of the camera (observed view)
-        add([
-            text("YOU WIN!", { size: 64 }),
-            color(32, 34, 255),
+        
+        // Remove the collected chest
+        if (chest.exists()) {
+            destroy(chest);
+            chestSpawned = false; // Allow new chest to spawn
+            // Update lastChestY to allow new chests to spawn
+            if (get("chest").length === 0) {
+                lastChestY = player.pos.y - 400;
+            }
+        }
+        
+        // Give bonus: restore one life (up to max 10)
+        if (lives < 10) {
+            lives++;
+            livesDisplay.text = `Lives: ${lives}`;
+        }
+        
+        // Show bonus message briefly
+        const bonusText = add([
+            text("+1 LIFE!", { size: 48 }),
+            color(0, 255, 0),
             pos(player.pos),
             anchor("center"),
             z(1000),
         ]);
-        // Remove player controls
-        leftHandler.cancel();
-        rightHandler.cancel();
-        jumpHandler.cancel();
-        player.use(body({ isStatic: true })); // freeze
-        // On any key press, reload game (go to main)
-        onKeyPress(() => {
-            go("main");
+        // Remove bonus text after 1 second
+        wait(1, () => {
+            if (bonusText.exists()) destroy(bonusText);
         });
     });
 
-    // Detect collision with monster - LOSE condition
+    // Detect collision with monster - reduce lives
+    let monsterCollisionCooldown = 0; // Prevent multiple collisions in quick succession
     player.onCollide("monster", () => {
-        if (win || lose) return; // Prevent multiple triggers
-        lose = true;
-        // Show YOU LOSE message at center
-        add([
-            text("YOU LOSE", { size: 64 }),
-            color(255, 40, 40),
-            pos(player.pos),
-            anchor("center"),
-            z(1000),
-        ]);
-        // Remove player controls
-        leftHandler.cancel();
-        rightHandler.cancel();
-        jumpHandler.cancel();
-        player.use(body({ isStatic: true })); // freeze
-        // After a short delay, listen for any key to restart
-        wait(0.1, () => {
-            onKeyPress(() => {
-                go("main");
+        if (win || lose || monsterCollisionCooldown > 0) return; // Prevent multiple triggers
+        monsterCollisionCooldown = 60; // Cooldown for 1 second (60 frames at 60 FPS)
+        
+        lives--; // Reduce life
+        livesDisplay.text = `Lives: ${lives}`; // Update display
+        
+        // If lives reach 0, player loses
+        if (lives <= 0) {
+            lose = true;
+            // Show YOU LOSE message at center
+            add([
+                text("YOU LOSE", { size: 64 }),
+                color(255, 40, 40),
+                pos(player.pos),
+                anchor("center"),
+                z(1000),
+            ]);
+            // Remove player controls
+            leftHandler.cancel();
+            rightHandler.cancel();
+            jumpHandler.cancel();
+            player.use(body({ isStatic: true })); // freeze
+            // After a short delay, listen for any key to restart
+            wait(0.1, () => {
+                onKeyPress(() => {
+                    go("main");
+                });
             });
-        });
+        }
     });
 
     // Camera follows player, reset jump count on landing, check for fall, and make monsters chase player
     onUpdate(() => {
         camPos(player.pos);
         
+        // Update lives display position to stay in top left of screen (relative to camera)
+        // Since camera follows player, screen top-left is at player.pos - (width/2, height/2)
+        if (livesDisplay.exists()) {
+            livesDisplay.pos = vec2(player.pos.x - width() / 2 + 20, player.pos.y - height() / 2 + 20);
+        }
+        
+        // Update height display position and track highest height reached
+        if (heightDisplay.exists()) {
+            heightDisplay.pos = vec2(player.pos.x - width() / 2 + 20, player.pos.y - height() / 2 + 60);
+            
+            // Track highest height (remember: lower Y = higher up)
+            if (player.pos.y < highestHeight) {
+                highestHeight = player.pos.y;
+                // Update display with height in meters (scaled for game feel)
+                const heightInMeters = Math.floor((height() - 48 - highestHeight) / 10);
+                heightDisplay.text = `Height: ${heightInMeters}m`;
+            }
+        }
+        
+        // Reduce collision cooldown
+        if (monsterCollisionCooldown > 0) {
+            monsterCollisionCooldown--;
+        }
+        
         // Reset jump count when player lands on ground or platform
         if (player.isGrounded()) {
             jumpCount = 0;
+        }
+        
+        // Infinite mode: Generate new platforms above player
+        if (!win && !lose) {
+            const playerY = player.pos.y;
+            
+            // Generate new platforms when player gets close to the top
+            while (highestPlatformY > playerY - PLATFORM_GENERATION_DISTANCE) {
+                highestPlatformY -= PLATFORM_SPACING;
+                createPlatform(highestPlatformY);
+            }
+            
+            // Platforms, monsters, and chests are NOT removed - they persist forever
+            // This allows the world to keep growing and players can go back down if needed
         }
         
         // Make monsters chase the player horizontally (only move on X axis)
