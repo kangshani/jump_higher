@@ -197,8 +197,8 @@ scene("main", () => {
 
     // Assign handlers
     function setupTouchButton(btn, setPressed) {
-        btn.onPress(() => setPressed(true));     // touch OR click inside the button
-        btn.onRelease(() => setPressed(false));  // touch OR click released inside OR outside
+        btn.onMousePress(() => setPressed(true));     // touch OR click inside the button
+        btn.onMouseRelease(() => setPressed(false));  // touch OR click released inside OR outside
     }
 
     // Bind interactive behavior
