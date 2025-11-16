@@ -197,10 +197,8 @@ scene("main", () => {
 
     // Assign handlers
     function setupTouchButton(btn, setPressed) {
-        btn.onMouseDown(() => setPressed(true));
-        btn.onMouseRelease(() => setPressed(false));
-        btn.onTouchStart(() => setPressed(true));
-        btn.onTouchEnd(() => setPressed(false));
+        btn.onPress(() => setPressed(true));     // touch OR click inside the button
+        btn.onRelease(() => setPressed(false));  // touch OR click released inside OR outside
     }
 
     // Bind interactive behavior
@@ -208,21 +206,14 @@ scene("main", () => {
     setupTouchButton(rightBtn, v => rightPressed = v);
     setupTouchButton(jumpBtn,  v => jumpPressed = v);
 
-    // Safety: release if any touch ends off-button
-    onMouseRelease(() => {
-        leftPressed = rightPressed = jumpPressed = false;
-    });
-    onTouchEnd(() => {
-        leftPressed = rightPressed = jumpPressed = false;
-    });
-
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
         if (!win && !lose) {
             if (leftPressed)  player.move(-PLAYER_SPEED, 0);
             if (rightPressed) player.move( PLAYER_SPEED, 0);
-            if (jumpPressed && player.isGrounded()) {
+            if (jumpPressed && (player.isGrounded() || jumpCount < 2)) {
                 player.jump(JUMP_FORCE);
+                jumpCount++;
             }
         }
     });
