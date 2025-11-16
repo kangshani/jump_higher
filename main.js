@@ -149,6 +149,85 @@ scene("main", () => {
         }
     });
 
+    // ---- TOUCH CONTROL BUTTONS WITH ICONS ----
+
+    // Button sizes adapt to screen width
+    const BTN_SIZE = width() * 0.06 ;
+    const BTN_MARGIN = width() * 0.04;
+
+    // Container height
+    const CONTROL_HEIGHT = height() * 0.22;
+
+    // Reusable button creator
+    function touchBtn(icon, posX) {
+        const btn = add([
+            pos(posX, height() - CONTROL_HEIGHT / 2),
+            circle(BTN_SIZE),
+            area(),
+            outline(4),
+            color(255, 255, 255),
+            opacity(0.35),
+            anchor("center"),
+            fixed(), 
+            { pressed: false },
+        ]);
+
+        // Icon (text child)
+        btn.add([
+            text(icon, {
+                size: BTN_SIZE * 0.9,          // scale icon to button size
+                font: "sans-serif",
+            }),
+            anchor("center"),
+            color(0, 0, 0),                    // black icon
+        ]);
+
+        return btn;
+    }
+
+    // Create buttons
+    const leftBtn  = touchBtn("←", width() - BTN_MARGIN * 2 - BTN_SIZE * 3);
+    const rightBtn = touchBtn("→", width() - BTN_MARGIN - BTN_SIZE);
+    const jumpBtn  = touchBtn("⤒", BTN_MARGIN + BTN_SIZE);
+
+    // Multi-touch state
+    let leftPressed = false;
+    let rightPressed = false;
+    let jumpPressed = false;
+
+    // Assign handlers
+    function setupTouchButton(btn, setPressed) {
+        btn.onMouseDown(() => setPressed(true));
+        btn.onMouseRelease(() => setPressed(false));
+        btn.onTouchStart(() => setPressed(true));
+        btn.onTouchEnd(() => setPressed(false));
+    }
+
+    // Bind interactive behavior
+    setupTouchButton(leftBtn,  v => leftPressed = v);
+    setupTouchButton(rightBtn, v => rightPressed = v);
+    setupTouchButton(jumpBtn,  v => jumpPressed = v);
+
+    // Safety: release if any touch ends off-button
+    onMouseRelease(() => {
+        leftPressed = rightPressed = jumpPressed = false;
+    });
+    onTouchEnd(() => {
+        leftPressed = rightPressed = jumpPressed = false;
+    });
+
+    // Apply movement every frame (joystick-style)
+    onUpdate(() => {
+        if (!win && !lose) {
+            if (leftPressed)  player.move(-PLAYER_SPEED, 0);
+            if (rightPressed) player.move( PLAYER_SPEED, 0);
+            if (jumpPressed && player.isGrounded()) {
+                player.jump(JUMP_FORCE);
+            }
+        }
+    });
+
+
     // Detect collision with chest (coin) - BONUS (infinite mode)
     player.onCollide("chest", (chest) => {
         if (win || lose) return; // Prevent multiple triggers
