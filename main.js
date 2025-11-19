@@ -222,23 +222,38 @@ scene("main", () => {
         activeTouches.delete(t.id);
     });
 
-    // Apply movement every frame (joystick-style)
+    // Mouse support for Jump (testing)
+    onMousePress("left", () => {
+        if (jumpBtn.isHovering()) {
+            if (!win && !lose) {
+                if (player.isGrounded() || jumpCount < 2) {
+                    player.jump(JUMP_FORCE);
+                    jumpCount++;
+                }
+            }
+        }
+    });
+
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
         if (!win && !lose) {
             let left = false;
             let right = false;
 
-            // Check if any active touch is on the movement buttons
+            // Check active touches
             for (const screenPos of activeTouches.values()) {
                 if (leftBtn.hasPoint(screenPos)) left = true;
                 if (rightBtn.hasPoint(screenPos)) right = true;
             }
 
+            // Check mouse (testing)
+            if (isMouseDown("left")) {
+                if (leftBtn.isHovering()) left = true;
+                if (rightBtn.isHovering()) right = true;
+            }
+
             if (left) player.move(-PLAYER_SPEED, 0);
             if (right) player.move(PLAYER_SPEED, 0);
-
-            // Jump is handled in onTouchStart
         }
     });
 
