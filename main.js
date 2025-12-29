@@ -193,6 +193,7 @@ scene("main", () => {
 
     // Multi-touch state tracking
     const activeTouches = new Map();
+    const touchesAlreadyJumped = new Set(); // Track which touches have triggered a jump
 
     // Helper to get robust ID
     function getTouchId(t) {
@@ -218,7 +219,8 @@ scene("main", () => {
 
         // Check for Jump button press (trigger once) - use distance check like movement buttons
         const distJ = jumpBtn.pos.dist(screenPos);
-        if (distJ <= BTN_SIZE) {
+        if (distJ <= BTN_SIZE && !touchesAlreadyJumped.has(id)) {
+            touchesAlreadyJumped.add(id); // Mark this touch as having jumped
             if (!win && !lose) {
                 // Double jump logic: ground jump sets count to 1, air jump increments
                 const wasGrounded = player.isGrounded();
@@ -245,6 +247,7 @@ scene("main", () => {
     onTouchEnd((pos, t) => {
         const id = getTouchId(t);
         activeTouches.delete(id);
+        touchesAlreadyJumped.delete(id); // Clear jump tracking when touch ends
     });
 
     // Mouse support for Jump (testing)
