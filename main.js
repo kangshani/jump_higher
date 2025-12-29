@@ -113,12 +113,18 @@ scene("main", () => {
         "player"
     ]);
 
+    // Initialize grounded tracking for jump reset logic
+    player.wasGroundedLastFrame = true;
+
     // Scene-local controls (stored so we can clean them up later if needed)
     let win = false;
     let lose = false;
     let jumpCount = 0; // Track number of jumps used (max 2 for double jump)
     let lives = 3; // Player starts with 3 lives
     let highestHeight = height() - 48; // Track highest platform Y reached (starts at ground level)
+
+    // Debug: Clear jump log on scene start
+    let initialJumpLog = [];
 
     // Create lives display in top left corner
     const livesDisplay = add([
@@ -225,14 +231,18 @@ scene("main", () => {
             if (!win && !lose) {
                 // Double jump logic: ground jump sets count to 1, air jump increments
                 const wasGrounded = player.isGrounded();
+                const beforeJC = jumpCount;
+
                 if (wasGrounded) {
                     player.jump(JUMP_FORCE);
                     jumpCount = 1;
-                    jumpLog.push(`J[${id}]:G->1`);
+                    jumpLog.push(`J[${id}]:${beforeJC}G->1`);
                 } else if (jumpCount < 2) {
                     player.jump(JUMP_FORCE);
                     jumpCount++;
-                    jumpLog.push(`J[${id}]:A->${jumpCount}`);
+                    jumpLog.push(`J[${id}]:${beforeJC}A->${jumpCount}`);
+                } else {
+                    jumpLog.push(`J[${id}]:BLOCK${jumpCount}`);
                 }
                 // Keep only last 3 jump events
                 if (jumpLog.length > 3) jumpLog.shift();
@@ -256,6 +266,9 @@ scene("main", () => {
     });
 
     // Mouse support for Jump (testing)
+    // DISABLED: On iPad, touches trigger BOTH touch AND mouse events, causing double jumps
+    // If testing on desktop with mouse, uncomment this:
+    /*
     onMousePress("left", () => {
         if (jumpBtn.isHovering()) {
             if (!win && !lose) {
@@ -270,6 +283,7 @@ scene("main", () => {
             }
         }
     });
+    */
 
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
@@ -422,10 +436,12 @@ scene("main", () => {
             monsterCollisionCooldown--;
         }
 
-        // Reset jump count when player lands on ground or platform
-        if (player.isGrounded()) {
+        // Reset jump count when player LANDS (air -> ground transition)
+        const isGroundedNow = player.isGrounded();
+        if (isGroundedNow && !player.wasGroundedLastFrame) {
             jumpCount = 0;
         }
+        player.wasGroundedLastFrame = isGroundedNow;
 
         // Infinite mode: Generate new platforms above player
         if (!win && !lose) {
