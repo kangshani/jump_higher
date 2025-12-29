@@ -194,6 +194,7 @@ scene("main", () => {
     // Multi-touch state tracking
     const activeTouches = new Map();
     const touchesAlreadyJumped = new Set(); // Track which touches have triggered a jump
+    let jumpLog = []; // Log recent jump events for debugging
 
     // Helper to get robust ID
     function getTouchId(t) {
@@ -227,10 +228,14 @@ scene("main", () => {
                 if (wasGrounded) {
                     player.jump(JUMP_FORCE);
                     jumpCount = 1;
+                    jumpLog.push(`J[${id}]:G->1`);
                 } else if (jumpCount < 2) {
                     player.jump(JUMP_FORCE);
                     jumpCount++;
+                    jumpLog.push(`J[${id}]:A->${jumpCount}`);
                 }
+                // Keep only last 3 jump events
+                if (jumpLog.length > 3) jumpLog.shift();
             }
         }
     });
@@ -310,7 +315,8 @@ scene("main", () => {
 
             // DEBUG: Show detailed state including jump info
             const grounded = player.isGrounded() ? "G" : "A";
-            debugText.text = `Touches: ${touchCount} | L:${left} R:${right} | JC:${jumpCount} ${grounded}\n${debugInfo.join("\n")}`;
+            const logStr = jumpLog.join(" ");
+            debugText.text = `Touches: ${touchCount} | L:${left} R:${right} | JC:${jumpCount} ${grounded}\n${logStr}\n${debugInfo.join("\n")}`;
 
             if (left) player.move(-PLAYER_SPEED, 0);
             if (right) player.move(PLAYER_SPEED, 0);
