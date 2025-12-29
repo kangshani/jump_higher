@@ -211,7 +211,8 @@ scene("main", () => {
 
     // Handle touch start
     onTouchStart((pos, t) => {
-        const screenPos = toScreen(pos);
+        // Touch positions are already in screen coordinates - don't convert!
+        const screenPos = pos;
         const id = getTouchId(t);
         activeTouches.set(id, screenPos);
 
@@ -229,7 +230,8 @@ scene("main", () => {
 
     // Handle touch move
     onTouchMove((pos, t) => {
-        const screenPos = toScreen(pos);
+        // Touch positions are already in screen coordinates - don't convert!
+        const screenPos = pos;
         const id = getTouchId(t);
         activeTouches.set(id, screenPos);
     });
