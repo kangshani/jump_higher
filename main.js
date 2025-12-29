@@ -255,25 +255,27 @@ scene("main", () => {
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
         // DEBUG: Show touch count and IDs
-        const ids = Array.from(activeTouches.keys()).join(",");
-        debugText.text = `Touches: ${activeTouches.size}\nIDs: ${ids}`;
+        // const ids = Array.from(activeTouches.keys()).join(",");
+        // debugText.text = `Touches: ${activeTouches.size}\nIDs: ${ids}`;
 
         if (!win && !lose) {
             let left = false;
             let right = false;
 
             // Check active touches (using Map)
+            // We use direct distance check instead of hasPoint() to avoid any coordinate space confusion
+            // with fixed() objects and camera movement.
             for (const screenPos of activeTouches.values()) {
-                if (leftBtn.hasPoint(screenPos)) left = true;
-                if (rightBtn.hasPoint(screenPos)) right = true;
+                if (leftBtn.pos.dist(screenPos) <= BTN_SIZE) left = true;
+                if (rightBtn.pos.dist(screenPos) <= BTN_SIZE) right = true;
 
                 // DEBUG: Visualize touches
-                drawCircle({
-                    pos: screenPos,
-                    radius: 20,
-                    color: RED,
-                    fixed: true,
-                });
+                // drawCircle({
+                //     pos: screenPos,
+                //     radius: 20,
+                //     color: RED,
+                //     fixed: true,
+                // });
             }
 
             // Check mouse (testing)
