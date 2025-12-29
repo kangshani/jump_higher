@@ -219,8 +219,11 @@ scene("main", () => {
         // Check for Jump button press (trigger once)
         if (jumpBtn.hasPoint(screenPos)) {
             if (!win && !lose) {
-                // Allow jump if grounded OR if player has only used 1 jump (double jump)
-                if (player.isGrounded() || jumpCount < 2) {
+                // Double jump logic: ground jump sets count to 1, air jump increments
+                if (player.isGrounded()) {
+                    player.jump(JUMP_FORCE);
+                    jumpCount = 1;
+                } else if (jumpCount < 2) {
                     player.jump(JUMP_FORCE);
                     jumpCount++;
                 }
@@ -246,7 +249,11 @@ scene("main", () => {
     onMousePress("left", () => {
         if (jumpBtn.isHovering()) {
             if (!win && !lose) {
-                if (player.isGrounded() || jumpCount < 2) {
+                // Double jump logic: ground jump sets count to 1, air jump increments
+                if (player.isGrounded()) {
+                    player.jump(JUMP_FORCE);
+                    jumpCount = 1;
+                } else if (jumpCount < 2) {
                     player.jump(JUMP_FORCE);
                     jumpCount++;
                 }
