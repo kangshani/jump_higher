@@ -194,10 +194,25 @@ scene("main", () => {
     // Multi-touch state tracking
     const activeTouches = new Map();
 
+    // Helper to get robust ID
+    function getTouchId(t) {
+        // Prefer identifier, fall back to id, then to a unique string if needed (unlikely)
+        return t.identifier !== undefined ? t.identifier : t.id;
+    }
+
+    // DEBUG: Add text to show touch info
+    const debugText = add([
+        text("", { size: 24 }),
+        pos(20, 100),
+        color(255, 0, 0),
+        z(2000),
+        fixed()
+    ]);
+
     // Handle touch start
     onTouchStart((pos, t) => {
         const screenPos = toScreen(pos);
-        const id = t.identifier;
+        const id = getTouchId(t);
         activeTouches.set(id, screenPos);
 
         // Check for Jump button press (trigger once)
@@ -215,13 +230,13 @@ scene("main", () => {
     // Handle touch move
     onTouchMove((pos, t) => {
         const screenPos = toScreen(pos);
-        const id = t.identifier;
+        const id = getTouchId(t);
         activeTouches.set(id, screenPos);
     });
 
     // Handle touch end
     onTouchEnd((pos, t) => {
-        const id = t.identifier;
+        const id = getTouchId(t);
         activeTouches.delete(id);
     });
 
@@ -239,6 +254,8 @@ scene("main", () => {
 
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
+        // debugText.text = `Touches: ${activeTouches.size}`;
+
         if (!win && !lose) {
             let left = false;
             let right = false;
@@ -247,6 +264,14 @@ scene("main", () => {
             for (const screenPos of activeTouches.values()) {
                 if (leftBtn.hasPoint(screenPos)) left = true;
                 if (rightBtn.hasPoint(screenPos)) right = true;
+
+                // DEBUG: Visualize touches
+                // drawCircle({
+                //     pos: screenPos,
+                //     radius: 20,
+                //     color: RED,
+                //     fixed: true,
+                // });
             }
 
             // Check mouse (testing)
@@ -259,6 +284,8 @@ scene("main", () => {
             if (right) player.move(PLAYER_SPEED, 0);
         }
     });
+
+
 
 
     // Detect collision with chest (coin) - BONUS (infinite mode)
