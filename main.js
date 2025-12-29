@@ -16,7 +16,7 @@ loadSprite("monster", "https://kaboomjs.com/sprites/ghosty.png"); // Monster spr
 const PLAYER_SPEED = 600;
 const JUMP_FORCE = 700;
 const GRAVITY = 1600;
-const MONSTER_SPEED = 150; // Speed at which monsters chase the player
+const MONSTER_SPEED = 100; // Speed at which monsters chase the player
 const PLATFORM_COLOR = [100, 200, 100];
 const GROUND_COLOR = [80, 60, 40];
 
@@ -240,7 +240,7 @@ scene("main", () => {
             let left = false;
             let right = false;
 
-            // Check active touches
+            // Check active touches (using Map)
             for (const screenPos of activeTouches.values()) {
                 if (leftBtn.hasPoint(screenPos)) left = true;
                 if (rightBtn.hasPoint(screenPos)) right = true;
