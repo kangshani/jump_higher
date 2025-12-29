@@ -262,12 +262,22 @@ scene("main", () => {
             let left = false;
             let right = false;
 
+            let debugInfo = [];
+
             // Check active touches (using Map)
             // We use direct distance check instead of hasPoint() to avoid any coordinate space confusion
             // with fixed() objects and camera movement.
-            for (const screenPos of activeTouches.values()) {
-                if (leftBtn.pos.dist(screenPos) <= BTN_SIZE) left = true;
-                if (rightBtn.pos.dist(screenPos) <= BTN_SIZE) right = true;
+            let touchIndex = 0;
+            for (const [id, screenPos] of activeTouches.entries()) {
+                const distL = leftBtn.pos.dist(screenPos);
+                const distR = rightBtn.pos.dist(screenPos);
+                const distJ = jumpBtn.pos.dist(screenPos);
+
+                if (distL <= BTN_SIZE) left = true;
+                if (distR <= BTN_SIZE) right = true;
+
+                debugInfo.push(`T${touchIndex}[${id}]: L=${distL.toFixed(0)} R=${distR.toFixed(0)} J=${distJ.toFixed(0)}`);
+                touchIndex++;
 
                 // DEBUG: Visualize touches
                 drawCircle({
@@ -285,7 +295,7 @@ scene("main", () => {
             }
 
             // DEBUG: Show detailed state
-            debugText.text = `Touches: ${touchCount} | L:${left} R:${right}`;
+            debugText.text = `Touches: ${touchCount} | L:${left} R:${right}\n${debugInfo.join("\n")}`;
 
             if (left) player.move(-PLAYER_SPEED, 0);
             if (right) player.move(PLAYER_SPEED, 0);
