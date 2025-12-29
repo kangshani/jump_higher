@@ -197,7 +197,8 @@ scene("main", () => {
     // Handle touch start
     onTouchStart((pos, t) => {
         const screenPos = toScreen(pos);
-        activeTouches.set(t.id, screenPos);
+        const id = t.identifier;
+        activeTouches.set(id, screenPos);
 
         // Check for Jump button press (trigger once)
         if (jumpBtn.hasPoint(screenPos)) {
@@ -214,12 +215,14 @@ scene("main", () => {
     // Handle touch move
     onTouchMove((pos, t) => {
         const screenPos = toScreen(pos);
-        activeTouches.set(t.id, screenPos);
+        const id = t.identifier;
+        activeTouches.set(id, screenPos);
     });
 
     // Handle touch end
     onTouchEnd((pos, t) => {
-        activeTouches.delete(t.id);
+        const id = t.identifier;
+        activeTouches.delete(id);
     });
 
     // Mouse support for Jump (testing)
