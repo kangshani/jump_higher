@@ -255,8 +255,8 @@ scene("main", () => {
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
         // DEBUG: Show touch count and IDs
-        // const ids = Array.from(activeTouches.keys()).join(",");
-        // debugText.text = `Touches: ${activeTouches.size}\nIDs: ${ids}`;
+        const ids = Array.from(activeTouches.keys()).join(",");
+        const touchCount = activeTouches.size;
 
         if (!win && !lose) {
             let left = false;
@@ -270,12 +270,12 @@ scene("main", () => {
                 if (rightBtn.pos.dist(screenPos) <= BTN_SIZE) right = true;
 
                 // DEBUG: Visualize touches
-                // drawCircle({
-                //     pos: screenPos,
-                //     radius: 20,
-                //     color: RED,
-                //     fixed: true,
-                // });
+                drawCircle({
+                    pos: screenPos,
+                    radius: 20,
+                    color: RED,
+                    fixed: true,
+                });
             }
 
             // Check mouse (testing)
@@ -283,6 +283,9 @@ scene("main", () => {
                 if (leftBtn.isHovering()) left = true;
                 if (rightBtn.isHovering()) right = true;
             }
+
+            // DEBUG: Show detailed state
+            debugText.text = `Touches: ${touchCount} | L:${left} R:${right}`;
 
             if (left) player.move(-PLAYER_SPEED, 0);
             if (right) player.move(PLAYER_SPEED, 0);
