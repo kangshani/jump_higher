@@ -216,11 +216,13 @@ scene("main", () => {
         const id = getTouchId(t);
         activeTouches.set(id, screenPos);
 
-        // Check for Jump button press (trigger once)
-        if (jumpBtn.hasPoint(screenPos)) {
+        // Check for Jump button press (trigger once) - use distance check like movement buttons
+        const distJ = jumpBtn.pos.dist(screenPos);
+        if (distJ <= BTN_SIZE) {
             if (!win && !lose) {
                 // Double jump logic: ground jump sets count to 1, air jump increments
-                if (player.isGrounded()) {
+                const wasGrounded = player.isGrounded();
+                if (wasGrounded) {
                     player.jump(JUMP_FORCE);
                     jumpCount = 1;
                 } else if (jumpCount < 2) {
@@ -303,8 +305,9 @@ scene("main", () => {
                 if (rightBtn.isHovering()) right = true;
             }
 
-            // DEBUG: Show detailed state
-            debugText.text = `Touches: ${touchCount} | L:${left} R:${right}\n${debugInfo.join("\n")}`;
+            // DEBUG: Show detailed state including jump info
+            const grounded = player.isGrounded() ? "G" : "A";
+            debugText.text = `Touches: ${touchCount} | L:${left} R:${right} | JC:${jumpCount} ${grounded}\n${debugInfo.join("\n")}`;
 
             if (left) player.move(-PLAYER_SPEED, 0);
             if (right) player.move(PLAYER_SPEED, 0);
