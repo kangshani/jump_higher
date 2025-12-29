@@ -254,7 +254,9 @@ scene("main", () => {
 
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
-        // debugText.text = `Touches: ${activeTouches.size}`;
+        // DEBUG: Show touch count and IDs
+        const ids = Array.from(activeTouches.keys()).join(",");
+        debugText.text = `Touches: ${activeTouches.size}\nIDs: ${ids}`;
 
         if (!win && !lose) {
             let left = false;
@@ -266,12 +268,12 @@ scene("main", () => {
                 if (rightBtn.hasPoint(screenPos)) right = true;
 
                 // DEBUG: Visualize touches
-                // drawCircle({
-                //     pos: screenPos,
-                //     radius: 20,
-                //     color: RED,
-                //     fixed: true,
-                // });
+                drawCircle({
+                    pos: screenPos,
+                    radius: 20,
+                    color: RED,
+                    fixed: true,
+                });
             }
 
             // Check mouse (testing)
