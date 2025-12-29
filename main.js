@@ -265,25 +265,6 @@ scene("main", () => {
         touchesAlreadyJumped.delete(id); // Clear jump tracking when touch ends
     });
 
-    // Mouse support for Jump (testing)
-    // DISABLED: On iPad, touches trigger BOTH touch AND mouse events, causing double jumps
-    // If testing on desktop with mouse, uncomment this:
-    /*
-    onMousePress("left", () => {
-        if (jumpBtn.isHovering()) {
-            if (!win && !lose) {
-                // Double jump logic: ground jump sets count to 1, air jump increments
-                if (player.isGrounded()) {
-                    player.jump(JUMP_FORCE);
-                    jumpCount = 1;
-                } else if (jumpCount < 2) {
-                    player.jump(JUMP_FORCE);
-                    jumpCount++;
-                }
-            }
-        }
-    });
-    */
 
     // Apply movement every frame (joystick-style)
     onUpdate(() => {
@@ -319,12 +300,6 @@ scene("main", () => {
                     color: RED,
                     fixed: true,
                 });
-            }
-
-            // Check mouse (testing)
-            if (isMouseDown("left")) {
-                if (leftBtn.isHovering()) left = true;
-                if (rightBtn.isHovering()) right = true;
             }
 
             // DEBUG: Show detailed state including jump info
